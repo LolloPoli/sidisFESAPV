@@ -217,7 +217,7 @@ void epic_studies(const char* fileList){
     HadronTreeRECO.Branch("epsilon", &eps, "epsilon/D");
 
     //double count3 = 0;
-    //double event = -1;
+    double event = -1;
     //--- output for debug
     //std::ofstream csv("output.csv");
     //csv << "event , status, parents, reco_pdg, true_pdg, px_reco, py_reco, pz_reco, mom_reco, px_true, py_true, pz_true, mom_true\n";
@@ -263,7 +263,7 @@ void epic_studies(const char* fileList){
         //double count2 = 0;
         //count3++;
         //double count = 0;
-
+        //if (event > 20) continue; // used to look at small data
         //--- Loop over generated particles
         for(unsigned int i=0; i<partGenStat.GetSize(); i++){
             int pdg = (partPdg[i]);
@@ -337,32 +337,32 @@ void epic_studies(const char* fileList){
                                     }
                                 } else if (partPdg[i] == recPdg[j]){ //important request
                                     TVector3 particle(partMomX[i],partMomY[i],partMomZ[i]);
-                                    TVector3 momentum_vect(trackMomX[recoAssoc[j]],trackMomY[recoAssoc[j]],trackMomZ[recoAssoc[j]]);
+                                    TVector3 reco_particle(trackMomX[recoAssoc[j]],trackMomY[recoAssoc[j]],trackMomZ[recoAssoc[j]]);
                                     double eta_particle = particle.PseudoRapidity();
-                                    double eta = momentum_vect.PseudoRapidity();
+                                    double eta = reco_particle.PseudoRapidity();
                                     //selection on eta to accept only particles within the detector acceptance, selection on y to accept only interesting particles (deep inelastic scattering+no bkg)
                                     if(eta >= -3.5 && eta <= 3.5 && el_y_mc >= 0.01 && el_y_mc <= 0.99){
-                                        hadron_px_mc = particle.X(), hadron_py_mc = particle.Y(), hadron_pz_mc = particle.Z();
+                                        hadron_px_mc = reco_particle.X(), hadron_py_mc = reco_particle.Y(), hadron_pz_mc = reco_particle.Z();
                                         hadron_pdg = pdg;
                                         int recpdg = (recPdg[j]);
                                         double goodPID_cont = goodnessOfPID[j];
-                                        double mom = particle.Mag();
+                                        hadron_mom = reco_particle.Mag();
                                         TLorentzVector photon_hadron_noBoost = MC_ElectronBeam - ElectronScattered_mc;
                                         double mass = partMass[i];
-                                        double E_hadron_mc = sqrt(mom*mom + mass*mass);
-                                        TLorentzVector hadron_noBoost(particle.X(), particle.Y(), particle.Z(), E_hadron_mc);
+                                        double E_hadron_mc = sqrt(hadron_mom*hadron_mom + mass*mass);
+                                        TLorentzVector hadron_noBoost(reco_particle.X(), reco_particle.Y(), reco_particle.Z(), E_hadron_mc);
                                         hadron_y = el_y_mc;
-                                        hadron_px = particle.X(); hadron_py = particle.Y(); hadron_pz = particle.Z();
+                                        hadron_px = reco_particle.X(); hadron_py = reco_particle.Y(); hadron_pz = reco_particle.Z();
                                         hadron_index++;
                                         hadron_pdg = pdg;
-                                        hadron_mom = particle.Mag();
+                                        hadron_mom = reco_particle.Mag();
                                         hadron_Q2 = -photon_hadron_noBoost.M2();
                                         hadron_xB = hadron_Q2 / (2 * MC_ProtonBeam.Dot(photon_hadron_noBoost));
                                         hadron_eta = eta;
-                                        hadron_Theta = particle.Theta(); hadron_Phi_lab = particle.Phi();
+                                        hadron_Theta = reco_particle.Theta(); hadron_Phi_lab = reco_particle.Phi();
                                         hadron_z = (MC_ProtonBeam * hadron_noBoost) / (MC_ProtonBeam * photon_hadron_noBoost);
                                         hadron_goodPID = goodPID_cont;
-
+                                        //if (hadron_Q2 < 1) std::cout << "ev: " << event << "   mom: " << hadron_mom << "  el: " << ElectronScattered_mc.E() << std::endl;
                                         TLorentzVector hadron_4vec = hadron_noBoost;
                                         TLorentzVector photon_hadron_4vec = photon_hadron_noBoost;
                                         // boost gamma*N - mandatory for the extraction of P_hT, Phi_h and Phi_s
