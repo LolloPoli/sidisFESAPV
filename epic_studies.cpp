@@ -1,5 +1,5 @@
 //-------------- Creation of Trees for electron and hadron
-//--- Authors: Lorenzo Polizzi (lorenzo.polizzi@unife.i), Sara Pucillo (sara.pucillo@cern.ch), Nicolò Valle (nicolo.valle@cern.ch)
+//--- Authors: Lorenzo Polizzi (lorenzo.polizzi@unife.it), Sara Pucillo (sara.pucillo@cern.ch), Nicolò Valle (nicolo.valle@cern.ch)
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TH3D.h>
@@ -87,6 +87,7 @@ void epic_studies(const char* fileList){
     TTreeReaderArray<double> partMomX(tree_reader, "MCParticles.momentum.x");
     TTreeReaderArray<double> partMomY(tree_reader, "MCParticles.momentum.y");
     TTreeReaderArray<double> partMomZ(tree_reader, "MCParticles.momentum.z");
+    TTreeReaderArray<double> partMass(tree_reader, "MCParticles.mass");
     TTreeReaderArray<int> partPdg(tree_reader, "MCParticles.PDG");
     TTreeReaderArray<int> parentsIndex(tree_reader, "_MCParticles_parents.index");
     TTreeReaderArray<int> daughterIndex(tree_reader, "_MCParticles_daughters.index");
@@ -106,6 +107,7 @@ void epic_studies(const char* fileList){
     TTreeReaderArray<float> trackMomX(tree_reader, "ReconstructedChargedRealPIDParticles.momentum.x");
     TTreeReaderArray<float> trackMomY(tree_reader, "ReconstructedChargedRealPIDParticles.momentum.y");
     TTreeReaderArray<float> trackMomZ(tree_reader, "ReconstructedChargedRealPIDParticles.momentum.z");
+    TTreeReaderArray<float> trackMass(tree_reader, "ReconstructedChargedParticles.mass");
     TTreeReaderArray<int> recPdg(tree_reader, "ReconstructedChargedParticles.PDG");
     TTreeReaderArray<float> goodnessOfPID(tree_reader, "ReconstructedChargedRealPIDParticles.goodnessOfPID");
     TTreeReaderArray<float> chi2(tree_reader, "CentralCKFTracks.chi2");
@@ -130,7 +132,7 @@ void epic_studies(const char* fileList){
     //--- Variables
     //--- electron
     double el_px_mc, el_py_mc, el_pz_mc, el_mom_mc, el_y_mc, el_theta_mc, el_phi_mc, el_eta_mc;
-    double el_px, el_py, el_pz, el_mom, el_pdg, el_theta, el_phi, el_eta;
+    double el_px, el_py, el_pz, el_mom, el_pdg, el_theta, el_phi, el_eta, el_y;
     //--- proton
     double pr_mom_mc, pr_px_mc, pr_py_mc, pr_pz_mc, pr_phi_mc, pr_theta_mc, pr_eta_mc;
     double pr_mom, pr_px, pr_py, pr_pz, pr_phi, pr_theta, pr_eta;
@@ -185,6 +187,7 @@ void epic_studies(const char* fileList){
     ElectronTreeRECO.Branch("el_pz", &el_pz, "el_pz/D");
     ElectronTreeRECO.Branch("el_mom", &el_mom, "el_mom/D");
     ElectronTreeRECO.Branch("el_pdg", &el_pdg, "el_pdg/D");
+    ElectronTreeRECO.Branch("el_y", &el_y, "el_y/D");
     ElectronTreeRECO.Branch("el_theta", &el_theta, "el_theta/D");
     ElectronTreeRECO.Branch("el_phi", &el_phi, "el_phi/D");
     ElectronTreeRECO.Branch("el_eta", &el_eta, "el_eta/D");
@@ -317,15 +320,17 @@ void epic_studies(const char* fileList){
                                     TLorentzVector el_q_mc = MC_ElectronBeam - ElectronScattered_mc;
                                     el_y_mc = (MC_ProtonBeam.Dot(el_q_mc))/(MC_ProtonBeam.Dot(MC_ElectronBeam));
                                     //selection on eta to accept only particles within the detector acceptance, selection on y to accept only interesting particles (deep inelastic scattering+no bkg)
-                                    if( -3.5<=el_eta_mc<= 3.5 && 0.01<=el_y_mc <= 0.99){
+                                    if(el_eta_mc >= -3.5 && el_eta_mc <= 3.5 && el_y_mc >= 0.01 && el_y_mc <= 0.99){
                                         int recpdg = (recPdg[j]);
                                         TVector3 recElmom(trackMomX[recoAssoc[j]],trackMomY[recoAssoc[j]],trackMomZ[recoAssoc[j]]);
                                         double eta = recElmom.PseudoRapidity();
                                         el_px = recElmom.X(), el_py = recElmom.Y(), el_pz = recElmom.Z();
-                                        double momE = recElmom.Mag();
-                                        el_mom = momE;
+                                        el_mom = recElmom.Mag();
                                         double theta = recElmom.Theta();
                                         double phi = recElmom.Phi();
+                                        ElectronScattered.SetPxPyPzE(trackMomX[recoAssoc[j]],trackMomY[recoAssoc[j]],trackMomZ[recoAssoc[j]], el_mom);
+                                        TLorentzVector el_q = MC_ElectronBeam - ElectronScattered;
+                                        el_y = (MC_ProtonBeam.Dot(el_q))/(MC_ProtonBeam.Dot(MC_ElectronBeam));
                                         //---filling
                                         ElectronTreeMC.Fill();
                                         ElectronTreeRECO.Fill();
@@ -336,14 +341,15 @@ void epic_studies(const char* fileList){
                                     double eta_particle = particle.PseudoRapidity();
                                     double eta = momentum_vect.PseudoRapidity();
                                     //selection on eta to accept only particles within the detector acceptance, selection on y to accept only interesting particles (deep inelastic scattering+no bkg)
-                                    if(-3.5<=el_eta_mc<= 3.5 && 0.01<=el_y_mc <= 0.99){
+                                    if(eta >= -3.5 && eta <= 3.5 && el_y_mc >= 0.01 && el_y_mc <= 0.99){
                                         hadron_px_mc = particle.X(), hadron_py_mc = particle.Y(), hadron_pz_mc = particle.Z();
                                         hadron_pdg = pdg;
                                         int recpdg = (recPdg[j]);
                                         double goodPID_cont = goodnessOfPID[j];
                                         double mom = particle.Mag();
-                                        TLorentzVector photon_hadron_noBoost = ElectronBeam - ElectronScattered_mc;
-                                        double E_hadron_mc = sqrt(mom*mom + 0.13957*0.13957);
+                                        TLorentzVector photon_hadron_noBoost = MC_ElectronBeam - ElectronScattered_mc;
+                                        double mass = partMass[i];
+                                        double E_hadron_mc = sqrt(mom*mom + mass*mass);
                                         TLorentzVector hadron_noBoost(particle.X(), particle.Y(), particle.Z(), E_hadron_mc);
                                         hadron_y = el_y_mc;
                                         hadron_px = particle.X(); hadron_py = particle.Y(); hadron_pz = particle.Z();
@@ -351,21 +357,28 @@ void epic_studies(const char* fileList){
                                         hadron_pdg = pdg;
                                         hadron_mom = particle.Mag();
                                         hadron_Q2 = -photon_hadron_noBoost.M2();
-                                        hadron_xB = hadron_Q2 / (2 * ProtonBeam.Dot(photon_hadron_noBoost));
+                                        hadron_xB = hadron_Q2 / (2 * MC_ProtonBeam.Dot(photon_hadron_noBoost));
                                         hadron_eta = eta;
                                         hadron_Theta = particle.Theta(); hadron_Phi_lab = particle.Phi();
-                                        hadron_z = (ProtonBeam * hadron_noBoost) / (ProtonBeam * photon_hadron_noBoost);
+                                        hadron_z = (MC_ProtonBeam * hadron_noBoost) / (MC_ProtonBeam * photon_hadron_noBoost);
                                         hadron_goodPID = goodPID_cont;
 
-                                        TLorentzVector hadron_mc = hadron_noBoost;
-                                        TLorentzVector photon_hadron_mc = photon_hadron_noBoost;
+                                        TLorentzVector hadron_4vec = hadron_noBoost;
+                                        TLorentzVector photon_hadron_4vec = photon_hadron_noBoost;
                                         // boost gamma*N - mandatory for the extraction of P_hT, Phi_h and Phi_s
-                                        TLorentzVector gammaN_mc = photon_hadron_noBoost + ProtonBeam;
-                                        TVector3 boost_gammaN_mc = -gammaN_mc.BoostVector();
-                                        hadron_mc.Boost(boost_gammaN_mc);
-                                        photon_hadron_mc.Boost(boost_gammaN_mc);
-                                        TVector3 zAxis_mc = photon_hadron_mc.Vect().Unit();
-                                        hadron_PhT = hadron_mc.Perp(zAxis_mc);
+                                        TLorentzVector gammaN = photon_hadron_noBoost + MC_ProtonBeam;
+                                        TVector3 boost_gammaN = -gammaN.BoostVector();
+                                        hadron_4vec.Boost(boost_gammaN);
+                                        photon_hadron_4vec.Boost(boost_gammaN);
+                                        TVector3 zAxis = photon_hadron_4vec.Vect().Unit();
+                                        hadron_PhT = hadron_4vec.Perp(zAxis);
+                                        // calculation of Phi_h
+                                        TVector3 yAxis = (MC_ElectronBeam.Vect().Cross(ElectronScattered_mc.Vect()));
+                                        TVector3 xAxis = yAxis.Cross(zAxis);
+                                        TVector3 PhT_vector = hadron_4vec.Vect() - (hadron_4vec.Vect().Dot(zAxis))*zAxis;
+                                        double hadron_Phx = PhT_vector.Dot(xAxis);
+                                        double hadron_Phy = PhT_vector.Dot(yAxis);
+                                        hadron_Phi_h = TMath::ATan2(hadron_Phy, -hadron_Phx);
                                         //---filling
                                         HadronTreeMC.Fill();
                                         HadronTreeRECO.Fill();
