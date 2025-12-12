@@ -475,7 +475,7 @@ void relevant_plots(int target_pdg = 211, const char* inputDir = "25.10_10x100")
     for (Long64_t i = 0; i < nEntries_hadMC; i++) {
         chainHadron_MC.GetEntry(i);
         if (i % 100000 == 0) cout << "MC entry: " << i << "/" << nEntries_hadMC << endl;
-        if(hadron_y_mc <= 0.99 && hadron_y_mc >= 0.01){
+        if(hadron_y_mc <= 0.99 && hadron_y_mc >= 0.01 && hadron_Q2_mc >= 1 && hadron_z_mc < 1){
             if (mc_pdg != target_pdg) continue;
             double bin_xQ2 = getBinIndex_xQ2(hadron_xB_mc, hadron_Q2_mc);
             double bin_zPt = getBinIndex_zPt(hadron_z_mc, hadron_PhT_mc);
