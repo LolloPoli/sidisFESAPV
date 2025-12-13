@@ -66,7 +66,8 @@ void SetStatsBox2(TH2* hist) {
 //------------- Helper: binning functions in xB–Q2 and z–P_hT
 int getBinIndex_xQ2(double xB, double Q2){
     // bin_xB
-    double bin_xB[][2] = {{1e-4, 1e-3}, {1e-3, 3e-3}, {3e-3, 1e-2}, {1e-2, 4e-2}, {4e-2, 1}};
+    //double bin_xB[][2] = {{1e-4, 1e-3}, {1e-3, 3e-3}, {3e-3, 1e-2}, {1e-2, 4e-2}, {4e-2, 1}}; // if 10x100
+    double bin_xB[][2] = {{5e-5, 3e-4}, {3e-4, 1e-3}, {1e-3, 3e-3}, {3e-3, 1e-2}, {1e-2, 1}}; // if 18x275
     // bin Q2
     vector<vector<array<double,2>>> binning_Q2_for_xB = {
         {{1,2}, {2,100}},
@@ -153,7 +154,7 @@ int getBinIndex_Pt(double Pt){
 
 
 //------------- Main function
-void relevant_plots(int target_pdg = -211, const char* inputDir = "25.10_10x100") {
+void relevant_plots(int target_pdg = -211, const char* inputDir = "25.10_18x275") {
 
     //---set_ePIC_style();
     gROOT->ProcessLine("set_ePIC_style()");
@@ -426,10 +427,12 @@ void relevant_plots(int target_pdg = -211, const char* inputDir = "25.10_10x100"
     //--- Array 2D and 4D for efficiency and purity
     int nBin_xQ2 = 16;
     int nBin_zPt = 30;
-    double bin_xB[][2] = {{1e-4, 1e-3}, {1e-3, 3e-3}, {3e-3, 1e-2}, {1e-2, 4e-2}, {4e-2, 1}};
+    // double bin_xB[][2] = {{1e-4, 1e-3}, {1e-3, 3e-3}, {3e-3, 1e-2}, {1e-2, 4e-2}, {4e-2, 1}}; // 10x100
+    double bin_xB[][2] = {{5e-5, 3e-4}, {3e-4, 1e-3}, {1e-3, 3e-3}, {3e-3, 1e-2}, {1e-2, 1}};
     // bin_Q2
     double bin_Q2_full[][2] = {{1, 2}, {2, 5}, {5, 20}, {20, 1000}};
-    double bin_xB_plot[] = {1e-4, 1e-3, 3e-3, 1e-2, 4e-2, 1};
+    //double bin_xB_plot[] = {1e-4, 1e-3, 3e-3, 1e-2, 4e-2, 1}; // 10x100
+    double bin_xB_plot[] = {5e-5, 3e-4, 1e-3, 3e-3, 1e-2, 1};
     double bin_Q2_plot[] = {1, 2, 5, 20, 1000};
     // bin_z
     double bin_z[][2] = {{0, 0.1}, {0.1, 0.2}, {0.2, 0.3}, {0.3, 0.5}, {0.5, 0.7}, {0.7, 1}};
@@ -882,8 +885,8 @@ void relevant_plots(int target_pdg = -211, const char* inputDir = "25.10_10x100"
     double y_ndc_min = 0.05, y_ndc_max = 0.96;
 
     // x and y axis-range (log)
-    double x_min = 1e-4, x_max = 1;
-    double y_min = 1, y_max = 100;
+    double x_min = 1e-5, x_max = 1;
+    double y_min = 1, y_max = 1000;
 
     // draw main lines
     TLine *xAxisLine = new TLine(x_ndc_min, y_ndc_min, x_ndc_max, y_ndc_min);
@@ -898,8 +901,38 @@ void relevant_plots(int target_pdg = -211, const char* inputDir = "25.10_10x100"
 
     // x-axis
     for (int i = -4; i <= 0; ++i) {
-        double val = pow(10, i);
-        double pos = x_ndc_min + (log10(val) - log10(x_min)) / (log10(x_max) - log10(x_min)) * (x_ndc_max - x_ndc_min);
+        double val  = pow(10, i);
+        double logv = log10(val);
+
+        double norm;
+        if (logv <= -3.0) {
+            // 10^-4 → 10^-3  (molto largo)
+            norm = 2.0 * (logv + 4.0);
+        }
+        else if (logv <= -2.0) {
+            // 10^-3 → 10^-2
+            norm = (2.0 + (logv + 3.0));
+        }
+        else if (logv <= -1.0) {
+            // 10^-2 → 10^-1
+            norm = (3.0 + 0.7 * (logv + 2.0));
+        }
+        else {
+            // 10^-1 → 1  (molto compresso)
+            norm = (3.7 + 0.3 * (logv + 1.0));
+        }
+
+        // normalizzazione totale (2 + 1 + 0.7 + 0.3 = 4)
+        norm /= 4.0;
+
+        double pos = x_ndc_min + norm * (x_ndc_max - x_ndc_min);
+        double dx = 0;
+        if (i == -4) dx = +0.1;
+        if (i == -3) dx = -0.095;
+        if (i == -2) dx = 0.03;
+        if (i == -1) dx = -0.03;
+        if (i == 0) dx = -0.02;
+        pos += dx;
 
         // tick
         TLine *tick = new TLine(pos, y_ndc_min, pos, y_ndc_min - 0.01);
@@ -915,34 +948,47 @@ void relevant_plots(int target_pdg = -211, const char* inputDir = "25.10_10x100"
         lab->Draw();
     }
 
+
+
     // x-axis title
-    TLatex *xlabel = new TLatex(0.9, y_ndc_min - 0.025, "x_{B}");
+    TLatex *xlabel = new TLatex(0.90, y_ndc_min - 0.025, "x_{B}");
     xlabel->SetTextSize(0.025);
     xlabel->SetTextAlign(22);
     xlabel->SetNDC(true);
     xlabel->Draw();
 
-    // y-axis
-    for (int i = 0; i <= 2; ++i) {
+    // y-axis title
+    for (int i = 0; i <= 3; ++i) {
         double val = pow(10, i);
-        double pos = y_ndc_min + (log10(val) - log10(y_min)) / (log10(y_max) - log10(y_min)) * (y_ndc_max - y_ndc_min);
+        double norm;
+        if (val <= 10.0)
+            norm = 2.0 * (log10(val)) / 4.0;
+        else if (val <= 100.0)
+            norm = (2.0 + (log10(val) - 1.0)) / 4.0;
+        else
+            norm = (3.0 + (log10(val) - 2.0)) / 4.0;
 
-        // tick
+        double pos = y_ndc_min + norm * (y_ndc_max - y_ndc_min);
+        // micro shift
+        double dy = 0.0;
+        if (val == 10.0)  dy = 0.1;   // higher
+        if (val == 100.0) dy = 0.08;    
+        pos += dy;
+
         TLine *tick = new TLine(x_ndc_min, pos, x_ndc_min - 0.01, pos);
         tick->SetNDC(true);
         tick->Draw();
 
-        // label
-        TLatex *lab = new TLatex(x_ndc_min - 0.01, pos, Form("10^{%d}", i));
-        lab->SetTextFont(42);
-        lab->SetTextSize(0.02);
+        TLatex *lab = new TLatex(x_ndc_min - 0.015, pos, Form("10^{%d}", i));
         lab->SetTextAlign(32);
+        lab->SetTextSize(0.02);
         lab->SetNDC(true);
         lab->Draw();
     }
 
+
     // y-axis title
-    TLatex *ylabel = new TLatex(x_ndc_min - 0.025, 0.85, "Q^{2} (GeV^{2})");
+    TLatex *ylabel = new TLatex(x_ndc_min - 0.025, 0.71, "Q^{2} (GeV^{2})");
     ylabel->SetTextSize(0.025);
     ylabel->SetTextAngle(90);
     ylabel->SetTextAlign(22);
@@ -1143,45 +1189,11 @@ void relevant_plots(int target_pdg = -211, const char* inputDir = "25.10_10x100"
     xAxisLine->Draw();
     yAxisLine->Draw();
 
-    // x-axis
-    for (int i = -4; i <= 0; ++i) {
-        double val = pow(10, i);
-        double pos = x_ndc_min + (log10(val) - log10(x_min)) / (log10(x_max) - log10(x_min)) * (x_ndc_max - x_ndc_min);
-
-        // tick
-        TLine *tick = new TLine(pos, y_ndc_min, pos, y_ndc_min - 0.01);
-        tick->SetNDC(true);
-        tick->Draw();
-
-        // label
-        TLatex *lab = new TLatex(pos, y_ndc_min - 0.03, Form("10^{%d}", i));
-        lab->SetTextFont(42);
-        lab->SetTextSize(0.02);
-        lab->SetTextAlign(22);
-        lab->SetNDC(true);
-        lab->Draw();
-    }
+    
 
     xlabel->Draw();
 
-    // y-axis
-    for (int i = 0; i <= 2; ++i) {
-        double val = pow(10, i);
-        double pos = y_ndc_min + (log10(val) - log10(y_min)) / (log10(y_max) - log10(y_min)) * (y_ndc_max - y_ndc_min);
-
-        // tick
-        TLine *tick = new TLine(x_ndc_min, pos, x_ndc_min - 0.01, pos);
-        tick->SetNDC(true);
-        tick->Draw();
-
-        // label
-        TLatex *lab = new TLatex(x_ndc_min - 0.01, pos, Form("10^{%d}", i));
-        lab->SetTextFont(42);
-        lab->SetTextSize(0.02);
-        lab->SetTextAlign(32);
-        lab->SetNDC(true);
-        lab->Draw();
-    }
+    
 
     ylabel->Draw();
 
