@@ -463,8 +463,8 @@ void relevant_plots(int target_pdg = 211, const char* inputDir = "25.10_10x100")
     vector<vector<vector<double>>> had_purity_xQ2_zPt_den(nBin_xQ2, vector<vector<double>> (nBin_zPt));
 
     // --- relative plots
-    vector<TH2D*> hist_efficiency_xQ2_zPt(nBin_xQ2+1);
-    vector<TH2D*> hist_purity_xQ2_zPt(nBin_xQ2+1);
+    vector<TH2D*> hist_efficiency_xQ2_zPt(nBin_xQ2);
+    vector<TH2D*> hist_purity_xQ2_zPt(nBin_xQ2);
     for (int ix = 0; ix < nBin_xQ2; ix++){
       hist_efficiency_xQ2_zPt[ix] = new TH2D(Form("hist_efficiency4D_xQ2_%d", ix+1), Form("%s efficiency as P_{hT} vs z for bin (%d, x_{B}-Q^{2}); z; P_{hT} [GeV]", label.Data(), ix+1), 6, bin_z_plot, 5, bin_Pt_plot);
       hist_purity_xQ2_zPt[ix] = new TH2D(Form("hist_purity4D_xQ2_%d", ix+1),Form("%s purity as P_{hT} vs z for bin (%d, x_{B}-Q^{2}); z; P_{hT} [GeV]", label.Data(), ix+1), 6, bin_z_plot, 5, bin_Pt_plot);
