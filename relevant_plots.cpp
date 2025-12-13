@@ -154,7 +154,7 @@ int getBinIndex_Pt(double Pt){
 
 
 //------------- Main function
-void relevant_plots(int target_pdg = -321, const char* inputDir = "25.10_10x100") {
+void relevant_plots(int target_pdg = 211, const char* inputDir = "25.10_10x100") {
 
     //---set_ePIC_style();
     gROOT->ProcessLine("set_ePIC_style()");
@@ -663,7 +663,8 @@ void relevant_plots(int target_pdg = -321, const char* inputDir = "25.10_10x100"
 
         TLatex Text_com;
         Text_com.SetTextAlign(13);
-        Text_com.DrawLatexNDC(.15,.85,"e+p, #sqrt{s} = 63.2 GeV");
+        if (inputDirStr == "25.10_10x100") Text_com.DrawLatexNDC(.15,.85,"e+p, #sqrt{s} = 63.2 GeV");
+        if (inputDirStr == "25.10_18x275") Text_com.DrawLatexNDC(.15,.85,"e+p, #sqrt{s} = 141 GeV");
 
         TLatex Text_date;
         Text_date.SetTextSize(0.035);
@@ -723,12 +724,13 @@ void relevant_plots(int target_pdg = -321, const char* inputDir = "25.10_10x100"
     //Text_ePIC.DrawLatexNDC(.15,.88,"ePIC"); // final published version
     TLatex Text_com;
     Text_com.SetTextAlign(13);
-    Text_com.DrawLatexNDC(.15,.85,"e+p, #sqrt{s} = 63.2 GeV");
+    if (inputDirStr == "25.10_10x100") Text_com.DrawLatexNDC(.15,.85,"e+p, #sqrt{s} = 63.2 GeV");
+    if (inputDirStr == "25.10_18x275") Text_com.DrawLatexNDC(.15,.85,"e+p, #sqrt{s} = 141 GeV");
     //Text_com.DrawLatexNDC(.15,.8,"L_{proj} = 10 fb^{-1}");
     TLatex Text_date;
     Text_date.SetTextSize(0.035);
     Text_date.SetTextFont(52);
-    Text_date.DrawLatexNDC(.65,.96,"Simu campaign: 08/2025");
+    Text_date.DrawLatexNDC(.65,.96,"Simu campaign: 10/2025");
 
     TImage *logo = TImage::Open("EPIC-logo_black_small.png");
     TPad *pad2 = new TPad("pad2", "Pad 2", 0.8, 0.8, 0.93, 0.93); // Create a new pad and then draw the image in it
