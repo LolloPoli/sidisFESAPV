@@ -466,9 +466,11 @@ void relevant_plots(int target_pdg = 211, const char* inputDir = "25.10_10x100")
     // --- relative plots
     vector<TH2D*> hist_efficiency_xQ2_zPt(nBin_xQ2);
     vector<TH2D*> hist_purity_xQ2_zPt(nBin_xQ2);
+    vector<TH2D*> hist_ratio_xQ2_zPt(nBin_xQ2);
     for (int ix = 0; ix < nBin_xQ2; ix++){
       hist_efficiency_xQ2_zPt[ix] = new TH2D(Form("hist_efficiency4D_xQ2_%d", ix+1), Form("%s efficiency as P_{hT} vs z for bin (%d, x_{B}-Q^{2}); z; P_{hT} [GeV]", label.Data(), ix+1), 6, bin_z_plot, 5, bin_Pt_plot);
       hist_purity_xQ2_zPt[ix] = new TH2D(Form("hist_purity4D_xQ2_%d", ix+1),Form("%s purity as P_{hT} vs z for bin (%d, x_{B}-Q^{2}); z; P_{hT} [GeV]", label.Data(), ix+1), 6, bin_z_plot, 5, bin_Pt_plot);
+      hist_ratio_xQ2_zPt[ix] = new TH2D(Form("hist_ratio4D_xQ2_%d", ix+1),Form("%s 1/(eff*#sqrt{eff*N}) as P_{hT} vs z for bin (%d, x_{B}-Q^{2}); z; P_{hT} [GeV]", label.Data(), ix+1), 6, bin_z_plot, 5, bin_Pt_plot);
     }
     // empty plots for inlet
     TH2D* hist_efficiency_xQ2_zPt_inlet = new TH2D("hist_efficiency4D_inlet", "hist_efficiency4D_inlet; z; P_{hT} [GeV]", 6, bin_z_plot, 5, bin_Pt_plot);
@@ -584,6 +586,8 @@ void relevant_plots(int target_pdg = 211, const char* inputDir = "25.10_10x100")
         treeHadron.Write();
         treeHadron_MC.Write();
 
+        vector<vector<vector<double>>> had_fraction_xQ2_zPt(nBin_xQ2, vector<vector<double>> (nBin_zPt));
+
         for (int ix = 0; ix < nBin_xQ2; ix++) {
             for (int iz = 0; iz < nBin_zPt; iz++) {
                 double n = had_efficiency_xQ2_zPt[ix][iz].size();
@@ -591,30 +595,38 @@ void relevant_plots(int target_pdg = 211, const char* inputDir = "25.10_10x100")
                 double n2 = had_efficiency_xQ2_zPt_2[ix][iz].size();
                 double n_all = had_purity_xQ2_zPt_num[ix][iz].size();
                 double n_all_den = had_purity_xQ2_zPt_den[ix][iz].size();
-                double eff = (n_mc > 0)? (double)n / (double)n_mc      : 0.0;
-                double err = (n_mc > 0)? sqrt(eff * (1.0 - eff) / n_mc) : 0.0;
-                double purity = (n_all_den > 0) ? (double)n / (double)n_all_den : 0.0;
+                double eff = (n > 0 || n_mc > 0) ? n/n_mc : 0.0;
+                double err = (n_mc > 0) ? sqrt(eff * (1.0 - eff) / n_mc) : 0.0;
+                double purity = (n > 0 || n_all > 0) ? n/n_all_den : 0.0;
+                double ratio = 1/(purity*sqrt(n_mc*eff));
+                if(ratio > 100000) ratio = 0;
                 //hist_efficiency_xQ2_zPt[ix]->SetBinError(..., err);
                 if (eff >= 1) eff = 1.0;
                 if (purity >= 1) purity = 1.0;
                 if(iz < 5) {
                     hist_efficiency_xQ2_zPt[ix]->SetBinContent(1, iz+1, eff);
                     hist_purity_xQ2_zPt[ix]->SetBinContent(1, iz+1, purity);
+                    hist_ratio_xQ2_zPt[ix]->SetBinContent(1, iz+1, ratio);
                 } else if (iz < 10) {
                     hist_efficiency_xQ2_zPt[ix]->SetBinContent(2, iz+1-5, eff);
                     hist_purity_xQ2_zPt[ix]->SetBinContent(2, iz+1-5, purity);
+                    hist_ratio_xQ2_zPt[ix]->SetBinContent(2, iz+1-5, ratio);
                 } else if (iz < 15) {
                     hist_efficiency_xQ2_zPt[ix]->SetBinContent(3, iz+1-10, eff);
                     hist_purity_xQ2_zPt[ix]->SetBinContent(3, iz+1-10, purity);
+                    hist_ratio_xQ2_zPt[ix]->SetBinContent(3, iz+1-10, ratio);
                 } else if (iz < 20) {
                     hist_efficiency_xQ2_zPt[ix]->SetBinContent(4, iz+1-15, eff);
                     hist_purity_xQ2_zPt[ix]->SetBinContent(4, iz+1-15, purity);
+                    hist_ratio_xQ2_zPt[ix]->SetBinContent(4, iz+1-15, ratio);
                 } else if (iz < 25) {
                     hist_efficiency_xQ2_zPt[ix]->SetBinContent(5, iz+1-20, eff);
                     hist_purity_xQ2_zPt[ix]->SetBinContent(5, iz+1-20, purity);
+                    hist_ratio_xQ2_zPt[ix]->SetBinContent(5, iz+1-20, ratio);
                 } else if (iz < 30) {
                     hist_efficiency_xQ2_zPt[ix]->SetBinContent(6, iz+1-25, eff);
                     hist_purity_xQ2_zPt[ix]->SetBinContent(6, iz+1-25, purity);
+                    hist_ratio_xQ2_zPt[ix]->SetBinContent(6, iz+1-25, ratio);
                 }
             }
     }
@@ -1509,6 +1521,206 @@ void relevant_plots(int target_pdg = 211, const char* inputDir = "25.10_10x100")
 
     c_layout_all->Update();
     c_layout_all->Write();
+
+
+
+	// ratio
+	// ratio
+    //--- purity
+    double global_min_all_ratio = 1e9;
+    double global_max_all_ratio = -1e9;
+    for (int ix = 0; ix < nBin_xQ2; ++ix) {
+        double min_tmp = hist_ratio_xQ2_zPt[ix]->GetMinimum();
+        double max_tmp = hist_ratio_xQ2_zPt[ix]->GetMaximum();
+        if (min_tmp < global_min_all_ratio) global_min_all_ratio = min_tmp;
+        if (max_tmp > global_max_all_ratio) global_max_all_ratio = max_tmp;
+        //if(global_max_all_ratio > 100000) global_max_all_ratio = 10000;
+    }
+
+    for (int ix = 0; ix < nBin_xQ2; ++ix) {
+        hist_ratio_xQ2_zPt[ix]->SetMinimum(0);
+        hist_ratio_xQ2_zPt[ix]->SetMaximum(global_max_all_ratio);
+    }
+
+    // exclude zmin = zmax
+    if (global_min_all == global_max_all) global_max_all = global_min_all + 1e-6;
+
+    for (int ixQ2 = 0; ixQ2 < nBin_xQ2; ++ixQ2) {
+        TCanvas *c_bin_zPt = new TCanvas(Form("%s c_ratio4D_xQ2_%d", tag.Data(), ixQ2+1), Form("%s Canvas %d", tag.Data(), ixQ2+1), 800, 800);
+        //c_bin_zPt->SetLogz();
+        hist_ratio_xQ2_zPt[ixQ2]->SetStats(0);
+        hist_ratio_xQ2_zPt[ixQ2]->Draw("colz");
+
+        vector<TPolyLine*> gridLines_zp;
+        vector<TText*> labels_zp;
+
+        int bin_index_zp = 1;
+
+        // General loop
+        for (int iz = 0; iz < 6; ++iz) {
+            for (size_t ip = 0; ip < binning_Pt_for_z[iz].size(); ++ip) {
+
+                double z[5] = {bin_z[iz][0], bin_z[iz][1], bin_z[iz][1], bin_z[iz][0], bin_z[iz][0]};
+                double Pt[5] = {
+                    binning_Pt_for_z[iz][ip][0],
+                    binning_Pt_for_z[iz][ip][0],
+                    binning_Pt_for_z[iz][ip][1],
+                    binning_Pt_for_z[iz][ip][1],
+                    binning_Pt_for_z[iz][ip][0]
+                };
+
+                // rectangle
+                TPolyLine *rect_zp = new TPolyLine(5, z, Pt);
+                rect_zp->SetLineWidth(2);
+                rect_zp->SetLineColor(kBlack);
+                rect_zp->Draw("same");
+                gridLines_zp.push_back(rect_zp);
+
+                // centre
+                double z_center = 0.5 * (bin_z[iz][0] + bin_z[iz][1]);
+                double Pt_center = 0.5 * (binning_Pt_for_z[iz][ip][0] + binning_Pt_for_z[iz][ip][1]);
+
+                TText *label = new TText(z_center, Pt_center, Form("%d", bin_index_zp++));
+                label->SetTextAlign(22);
+                label->SetTextSize(0.03);
+                label->SetTextColor(kRed+1);
+                label->Draw("same");
+                labels_zp.push_back(label);
+            }
+        }
+
+        c_bin_zPt->Update();
+        c_bin_zPt->Write();
+    }
+
+
+    //--- ratio plot for all bins
+    TCanvas *c_layout_all_ratio = new TCanvas(Form("%s c_4D_ratio", tag.Data()), Form("%s All ratio bins", tag.Data()), 1800, 1200);
+    c_layout_all_ratio->cd();
+
+    pad_axes->Draw();
+    pad_axes->cd();
+
+    pad_axes->SetTickx(0);
+    pad_axes->SetTicky(0);
+
+    xAxisLine->Draw();
+    yAxisLine->Draw();
+
+    
+
+    xlabel->Draw();
+
+    
+
+    ylabel->Draw();
+
+    pad_axes->Modified();
+    pad_axes->Update();
+
+    c_layout_all_ratio->cd();
+
+
+    for (int iz = 0; iz < 6; ++iz) {
+        for (size_t ip = 0; ip < binning_Pt_for_z[iz].size(); ++ip) {
+            double z[5] = {bin_z[iz][0], bin_z[iz][1], bin_z[iz][1], bin_z[iz][0], bin_z[iz][0]};
+            double Pt[5] = {
+                binning_Pt_for_z[iz][ip][0],
+                binning_Pt_for_z[iz][ip][0],
+                binning_Pt_for_z[iz][ip][1],
+                binning_Pt_for_z[iz][ip][1],
+                binning_Pt_for_z[iz][ip][0]
+            };
+            TPolyLine *rect = new TPolyLine(5, z, Pt);
+            rect->SetLineWidth(1);
+            rect->SetLineColor(kBlack);
+            grid_zp.push_back(rect);
+        }
+    }
+    // Loop and creation of the pads
+    for (int iRow = 0; iRow < nRows; ++iRow) {
+        for (int iCol = 0; iCol < nCols; ++iCol) {
+            int idx = layout[iRow][iCol]; // idx is the bin index
+            if (idx == 0) continue;
+
+            // normalized coordinates: (x1,y1) bottom-left, (x2,y2) top-right
+            double x1 = xMargin + iCol * padW;
+            double x2 = x1 + padW;
+            // ATTENZIONE: iRow = 0 significa riga in alto nella tua matrice, per cui dobbiamo invertire l'ordine per le y in coordinate normalized
+            double y2 = 1.0 - yMargin - iRow * padH;
+            double y1 = y2 - padH;
+
+            // only 1 pad
+            TString padName = Form("%s_pad_r%d_c%d", tag.Data(), iRow, iCol);
+            c_layout_all_ratio->cd();
+
+            TPad *pad = new TPad(padName, padName, x1, y1, x2, y2);
+            pad->SetRightMargin(0.0);
+            pad->SetLeftMargin(0.0);
+            pad->SetBottomMargin(0.0);
+            pad->SetTopMargin(0.0);
+            pad->SetLogz();
+            pad->Draw();
+            pad->cd();
+
+            // Histogram draw (mo colorbar)
+            hist_ratio_xQ2_zPt[idx - 1]->SetTitle("");
+            hist_ratio_xQ2_zPt[idx - 1]->Draw("col"); // idx-1 perché vettore 0-based
+            for (auto &rect : grid_zp) rect->DrawClone("same");
+            // Come back to the canvas, before moving to the next pad
+            c_layout_all_ratio->cd();
+        }
+    }
+    c_layout_all_ratio->Modified();
+
+    TPad *pad_palette_all_ratio = new TPad(Form("%s_pad_palette_all_ratio",tag.Data()), "", 0.94, 0.1, 1, 0.9);
+    pad_palette_all_ratio->SetRightMargin(0.5);  // spazio per la palette
+    pad_palette_all_ratio->SetLogz();
+    pad_palette_all_ratio->Draw();
+    pad_palette_all_ratio->cd();
+
+    //
+    TH2F *h_ref_all_ratio = (TH2F*) hist_ratio_xQ2_zPt[2]->Clone(Form("%s h_ref_all2_for_palette",tag.Data()));
+    h_ref_all_ratio->SetStats(0);
+    h_ref_all_ratio->Draw("COLZ");
+    gPad->Update();
+
+    //
+    TPaletteAxis *pal_all_ratio = (TPaletteAxis*) h_ref_all_ratio->GetListOfFunctions()->FindObject("palette");
+    if (pal_all_ratio) {
+        pal_all_ratio->SetLabelSize(0.22);
+        pal_all_ratio->SetTitleOffset(0.0);
+        //pal->SetTitle("Purity");
+        pal_all_ratio->SetX1NDC(0.05);
+        pal_all_ratio->SetX2NDC(0.5);
+        pal_all_ratio->SetY1NDC(0.05);
+        pal_all_ratio->SetY2NDC(0.95);
+    }
+
+
+    pad_palette_all_ratio->Modified();
+    c_layout_all_ratio->Update();
+
+    c_layout_all_ratio->cd();
+    TLatex *globalTitle_all_ratio = new TLatex(0.12, 0.95, Form("%s 4D Ratio Distribution",label.Data()));
+    globalTitle_all_ratio->SetNDC(true);
+    //globalTitle->SetTextFont(62);
+    globalTitle_all_ratio->SetTextSize(0.04);
+    globalTitle_all_ratio->SetTextAlign(13);
+    globalTitle_all_ratio->Draw();
+    TLatex *subTitle_all_ratio = new TLatex(0.08, 0.9, Form(" RECO %s | 1/(purity*#sqrt{eff*N})", label.Data()));
+    subTitle_all_ratio->SetNDC(true);
+    subTitle_all_ratio->SetTextSize(0.025);
+    subTitle_all_ratio->SetTextAlign(13);
+    subTitle_all_ratio->Draw();
+    TLatex *subsub_all_ratio = new TLatex(0.17, 0.86, "(x_{B}, Q^{2}, z, P_{hT})");
+    subsub_all_ratio->SetNDC(true);
+    subsub_all_ratio->SetTextSize(0.03);
+    subsub_all_ratio->SetTextAlign(13);
+    subsub_all_ratio->Draw();
+
+    c_layout_all_ratio->Update();
+    c_layout_all_ratio->Write();
 
 
     //outFile.Write();
