@@ -27,9 +27,9 @@ git push
 ### Macros
 1. **epic_studies.cpp** runs over generated files (Pythia8), loops over all events, and fills a dedicated tree for the electron (MC and reco) and for the hadrons (MC and reco), storing all the relevant information (e.g. px, py, pz, PDG, Q2, xB, ... ). It takes as input a list file (.txt): the first line is the name of the output file, and each subsequent line is the path to an input file. To run the code from the terminal: 'root -l epic_studies.cpp\(\"lista_epic_studies.txt\"\)'.
 
-2. **pion.plot2.cpp** runs over the epic_studies.cpp output and produce several plots
+2. **pion_plot2.cpp** runs over the epic_studies.cpp output and produce several plots
 
-3. **relevant.plots.cpp** runs over the output produced by epic_studies.cpp and generates a set of relevant plots for a chosen particle species, saving them in a single .root output file. The macro takes as input: the pdg code of the particle of interest (211 for positive pions, -211 for negative pions, 321 for positive kaons and -321 for negative kaons) and the input directory (e.g. 25.10_10x100) containing the .root files produced by epic_studies.cpp (and where the macro will also write its output).
+3. **relevant_plots.cpp** runs over the output produced by epic_studies.cpp and generates a set of relevant plots for a chosen particle species, saving them in a single .root output file. The macro takes as input: the pdg code of the particle of interest (211 for positive pions, -211 for negative pions, 321 for positive kaons and -321 for negative kaons) and the input directory (e.g. 25.10_10x100) containing the .root files produced by epic_studies.cpp (and where the macro will also write its output).
 
 Pay attention: In "relevant_plot.cpp" the bin structure currently needs to be modified when switching between the 10x100 and 18x275 configurations.
 
