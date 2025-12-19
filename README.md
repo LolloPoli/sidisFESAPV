@@ -45,5 +45,8 @@ To run it locally:
 
 # Useful information
 
+### ePIC production
+The official production campaigns can be checked [here](https://github.com/eic/epic-prod/tree/main/docs/RECO).
+
 ### MC cross sections
 Pythia8 DIS NC cross sections available [here](https://docs.google.com/spreadsheets/d/1yCUZFJjMbE-Ly73juGKYvsA-VufUplaDMWs4Uv7PqAk/edit?usp=sharing). (from Ralf who got them from Tyler)
