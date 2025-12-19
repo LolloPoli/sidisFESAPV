@@ -31,7 +31,7 @@ git push
 
 3. **relevant_plots.cpp** runs over the output produced by epic_studies.cpp and generates a set of relevant plots for a chosen particle species, saving them in a single .root output file. The macro takes as input: the pdg code of the particle of interest (211 for positive pions, -211 for negative pions, 321 for positive kaons and -321 for negative kaons) and the input directory (e.g. 25.10_10x100) containing the .root files produced by epic_studies.cpp (and where the macro will also write its output).
 
-Pay attention: In "relevant_plot.cpp" the bin structure currently needs to be modified when switching between the 10x100 and 18x275 configurations. ---
+Pay attention: In "relevant_plot.cpp" the bin structure currently needs to be modified when switching between the 10x100 and 18x275 configurations. 
 
 ### Workflow
 
