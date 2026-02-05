@@ -1263,7 +1263,7 @@ void relevant_plots_highQ2(int target_pdg = 321, const char* inputDir = "/volati
         norm /= 4.0;
 
         double pos = x_ndc_min + norm * (x_ndc_max - x_ndc_min)*0.525;
-        if( val == 0.01 ) pos = 0.06;
+        if (val == 0.05 ) pos = 0.06;
         else if (val == 0.1) pos = 0.285;
         else if (val == 0.4) pos = 0.715;
         else if (val == 1.0) pos = 0.94;
