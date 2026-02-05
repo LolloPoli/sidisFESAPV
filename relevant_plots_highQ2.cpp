@@ -644,7 +644,7 @@ void relevant_plots_highQ2(int target_pdg = 321, const char* inputDir = "/volati
                 double eff = (n > 0 || n_mc > 0) ? n/n_mc : 0.0;
                 double err = (n_mc > 0) ? sqrt(eff * (1.0 - eff) / n_mc) : 0.0;
                 double purity = (n > 0 || n_all > 0) ? n/n_all_den : 0.0;
-                double ratio = 1/(purity*sqrt((10/6.73e-3)*n_mc*eff)); // 10fb-1 luminosity
+                double ratio = 1/(purity*sqrt((10/6.30)*n_mc*eff)); // 10fb-1 luminosity
                 if(ratio > 100000) ratio = 0;
                 //hist_efficiency_xQ2_zPt[ix]->SetBinError(..., err);
                 if (eff >= 1) eff = 1.0;
